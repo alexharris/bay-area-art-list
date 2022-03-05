@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Google Sheets API Quickstart</title>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <p>Google Sheets API Quickstart</p>
+
+    <div>
+
+    </div>
+
+    <!-- From: https://github.com/yesmesalman/fetch-data-from-google-spreadsheet-using-js -->
+    <script type="text/javascript">
+      // Client ID and API key from the Developer Console
+
+      function makeApiCall() {
+        var params = {
+
+          // The ID of the spreadsheet to retrieve data from.
+          spreadsheetId: '1WkrD2baQodRGnBuFW7ZyZfWYR2vcQOecWVDzCsPp_kg',  // TODO: Update placeholder value.
+
+          // The A1 notation of the values to retrieve.
+          range: 'Sheet1',  // TODO: Update placeholder value.
+
+        };
+
+      var request = gapi.client.sheets.spreadsheets.values.get(params);
+      request.then(function(response) {
+        // TODO: Change code below to process the `response` object:
+        results = response.result.values
+        loadContent(results)
+      }, function(reason) {
+        console.error('error: ' + reason.result.error.message);
+      });
+    }
+
+    function initClient() {
+
+      //Add Your API Key here
+      var API_KEY = 'AIzaSyCmEpbC5xR6cMHTizSbFq6bHArzYsfgg94';
+
+      //Add Client ID here
+      var CLIENT_ID = '394272548399-s34rr5i4oucssr0pgh6r8m07e7msceki.apps.googleusercontent.com';
+
+      var SCOPE = 'https://www.googleapis.com/auth/spreadsheets.readonly';
+      gapi.client.init({
+        'apiKey': API_KEY,
+        'clientId': CLIENT_ID,
+        'scope': SCOPE,
+        'discoveryDocs': ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+      }).then(function() {
+        makeApiCall();
+      });
+      }
+
+      function handleClientLoad() {
+      gapi.load('client:auth2', initClient);
+    }    
+
+    function loadContent(results) {
+      console.log(results)
+      document.getElementsByTagName('div')[0].append(results)
+    }
+
+    </script>
+
+    <script async defer src="https://apis.google.com/js/api.js"
+      onload="this.onload=function(){};handleClientLoad()"
+      onreadystatechange="if (this.readyState === 'complete') this.onload()">
+    </script>
+  </body>
+</html>
