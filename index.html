@@ -4,12 +4,17 @@
     <title>Bay Area Art List</title>
     <meta charset="utf-8" />
     <style>
-      h2 {
+      h3 {
         font-size: 1.1em;
         margin-bottom: 0;
       }
       p {
         margin: 0;
+      }
+      #menu span {
+        color: blue;
+        text-decoration: underline;
+        cursor: pointer;
       }
     </style>
     <script src="handlebars.min-v4.7.7.js"></script>    
@@ -17,16 +22,20 @@
   </head>
   <body>
     <h1>Bay Area Art List</h1>
+    <div id="menu">
+      <span data-sheet-number="0" class="menu-button">Opening</span>
+      <span data-sheet-number="1" class="menu-button">Closing</span>
+    </div>
+    <h2 id="current-sheet-title"></h2>
     <div id="content"></div>
     
     
     <script id="template1" type="text/x-handlebars-template">
-      <div>
-      
-      {{#each event}}
+   
+      {{#each this}}
         <div>
        
-          <h2>{{this.highlight}} {{#if this.artist}}{{this.artist}}{{/if}}{{#if this.event}}{{this.event}}{{/if}}</h2>
+          <h3>{{this.highlight}} {{#if this.artist}}{{this.artist}}{{/if}}{{#if this.event}}{{this.event}}{{/if}}</h3>
           <p>
           {{#if this.location}}
             {{this.location}}<br />
@@ -44,7 +53,7 @@
           </p>
         </div>
       {{/each}}
-     </div>
+
     </script>    
     
     
@@ -52,111 +61,150 @@
     <!-- From: https://github.com/yesmesalman/fetch-data-from-google-spreadsheet-using-js -->
     <script type="text/javascript">
 
-  
+        const nameOfMonth = new Date().toLocaleString(
+          'default', {month: 'long'}
+        );
+
+      var sheetNames = ['Opening ' + nameOfMonth + ' 2022', 'Closing ' + nameOfMonth + ' 2022']
+
+      // This gets called by tthe onload footer thing
+      function handleClientLoad() {
+        gapi.load('client:auth2', initClient);
+      }  
+
+      // google api stuff
       // Client ID and API key from the Developer Console
+      function initClient() {
+        //Add Your API Key here
+        var API_KEY = 'AIzaSyCmEpbC5xR6cMHTizSbFq6bHArzYsfgg94';
 
-      function makeApiCall() {
-        var params = {
+        //Add Client ID here
+        var CLIENT_ID = '394272548399-s34rr5i4oucssr0pgh6r8m07e7msceki.apps.googleusercontent.com';
 
-          // The ID of the spreadsheet to retrieve data from.
-          spreadsheetId: '1WkrD2baQodRGnBuFW7ZyZfWYR2vcQOecWVDzCsPp_kg',  // TODO: Update placeholder value.
-
-          // The A1 notation of the values to retrieve.
-          range: 'Opening March 2022',  // TODO: Update placeholder value.
-
-        };
-
-      var request = gapi.client.sheets.spreadsheets.values.get(params);
-      request.then(function(response) {
-        // TODO: Change code below to process the `response` object:
-        results = response.result.values
-        loadContent(results)
-      }, function(reason) {
-        console.error('error: ' + reason.result.error.message);
-      });
-    }
-
-    function initClient() {
-
-      //Add Your API Key here
-      var API_KEY = 'AIzaSyCmEpbC5xR6cMHTizSbFq6bHArzYsfgg94';
-
-      //Add Client ID here
-      var CLIENT_ID = '394272548399-s34rr5i4oucssr0pgh6r8m07e7msceki.apps.googleusercontent.com';
-
-      var SCOPE = 'https://www.googleapis.com/auth/spreadsheets.readonly';
-      gapi.client.init({
-        'apiKey': API_KEY,
-        'clientId': CLIENT_ID,
-        'scope': SCOPE,
-        'discoveryDocs': ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
-      }).then(function() {
-        makeApiCall();
-      });
+        var SCOPE = 'https://www.googleapis.com/auth/spreadsheets.readonly';
+        gapi.client.init({
+          'apiKey': API_KEY,
+          'clientId': CLIENT_ID,
+          'scope': SCOPE,
+          'discoveryDocs': ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+        }).then(function() {
+          makeApiCall(sheetNames);
+        });
       }
 
-      function handleClientLoad() {
-      gapi.load('client:auth2', initClient);
-    }    
-    
-    var jsonData = { 
-        event : [] 
-    };
+      // An array to hold the various sheet results in
+      var resultSets = {}
 
-    function loadContent(results) {
-      i = 0;
-      results.forEach(function(element) {
-        // 0: "!"
-        // 1: "Artist/s"
-        // 2: "Show/Event"
-        // 3: "Location"
-        // 4: "Start date"
-        // 5: "End date"
-        // 6: "Address"
-        // 7: "URL"
-        // 8: "Notes"     
-        if(i !== 0) {
-          jsonData['event'][i] = {
-            highlight: element[0],
-            artist: element[1],
-            // event: element[2],
-            location: element[3],
-            start: element[4],
-            end: element[5],
-            address: element[6],
-            url: element[7],
-            notes: element[8],
+      // call the google sheet using api
+      // "sheets" is an array of sheet names
+      function makeApiCall(sheets) {
+
+        var itemsProcessed = 0;
+        // Go through each of the sheets
+        sheets.forEach(function(sheetName){
+          // the parameters for the api request
+          var params = {
+            // The ID of the spreadsheet to retrieve data from.
+            spreadsheetId: '1t7v_22uT7LcR-1Q-ZGhK4s6ZUPanv8E5tRQ1GOxOnsw',  // TODO: Update placeholder value.
+            // The A1 notation of the values to retrieve.
+            range: sheetName,  // TODO: Update placeholder value.
           }
-          // This section adds a colon if there is both an artist and an event
-          console.log(element[1])
-          if (element[1] && element[2]){
-            console.log('both');
-              jsonData['event'][i]['event'] = ': ' + element[2]   
-          } else {
-            console.log('not both')
-            jsonData['event'][i]['event'] = element[2]   
-          }
-        }
-        
-        i++;
-      } );
-      
-      putContentIntoHtml()
-    }
+          
+          // The api request
+          var request = gapi.client.sheets.spreadsheets.values.get(params);
+
+          // get results from the request
+          request.then(function(response) {
+            results = response.result.values
+            // add a results object to the resultSets array
+            resultSets[sheetName] = new Object(results);
+            itemsProcessed++;
+            if(itemsProcessed === sheets.length) {
+              loadContent();
+            }
+          }, function(reason) {
+            console.error('error: ' + reason.result.error.message);
+          }); 
+        })
+      }
+
+  
     
-    function putContentIntoHtml() {
-    //json data for handlebar template
-    var data = jsonData;
-    console.log(data)
-    //handlebar template html
-    var template = $("#template1").html();
-    //handlebar's compile method returns special function which can be used to get final html
-    var compiledCode = Handlebars.compile(template);
-    //json data is passed to compiled code and result will be html
-    var result = compiledCode(data);
-    //compiled html can be rendered in document
-    $("#content").html(result);
+      var jsonData = new Array()
+
+      function loadContent() {
+  
+    
+
+        //go through each sheet
+        for (sheet in resultSets) {
+          i = 0;
+          // console.log(sheet)
+          sheetResults = resultSets[sheet] // the results of the one sheet
+          // console.log(sheetResults)
+          jsonData[sheet] = {} //place to put json data
+          sheetResults.forEach(function(element) {
+            console.log(i)
+            if(i !== 0) { //ignore the first item because it is the header
+              // console.log(element)
+              jsonData[sheet][i] = new Object();
+              jsonData[sheet][i] = { 
+        
+                  highlight: element[0],  // 0: "!"
+                  artist: element[1], // 1: "Artist/s"
+                  // event: element[2], // 2: "Show/Event"
+                  location: element[3], // 3: "Location"
+                  start: element[4], // 4: "Start date"
+                  end: element[5], // 5: "End date"
+                  address: element[6], // 6: "Address"
+                  url: element[7], // 7: "URL"
+                  notes: element[8], // 8: "Notes" 
+                
+
+              }
+              
+              
+              // This section adds a colon if there is both an artist and an event
+              if (element[1] && element[2]){
+                  jsonData[sheet][i]['event'] = ': ' + element[2]   
+              } else {
+                jsonData[sheet][i]['event'] = element[2]   
+              }
+            }          
+            i++;            
+          })
+        }
+
+        putContentIntoHtml(0)
+      }
+    
+
+    function putContentIntoHtml(sheetNumber) {
+      //json data for handlebar template
+
+      // console.log(resultSets)
+      var data = jsonData;
+
+      //handlebar template html
+      var template = $("#template1").html();
+      //handlebar's compile method returns special function which can be used to get final html
+      var compiledCode = Handlebars.compile(template);
+      //json data is passed to compiled code and result will be html
+      var result = compiledCode(data[sheetNames[sheetNumber]]);
+
+      //compiled html can be rendered in document
+      $("#content").html(result);
+
+      // put title of current sheet on top
+      document.getElementById('current-sheet-title').innerHTML = sheetNames[sheetNumber]
       
+    }
+
+
+    document.getElementById('menu').onclick = function changeContent(e) {
+      var sheetNumber = e.target.dataset.sheetNumber
+      putContentIntoHtml(sheetNumber)
+   
     }
     
     
